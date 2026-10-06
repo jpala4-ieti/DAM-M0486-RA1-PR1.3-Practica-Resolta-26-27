@@ -57,7 +57,7 @@ public class PR131Main {
         File dataDir = new File(userDir, "data" + File.separator + "pr13");
 
         PR131Main app = new PR131Main(dataDir);
-        app.processarDocument("biblioteca.xml");
+        app.processarFitxerXML("biblioteca.xml");
     }
 
     /**
@@ -65,7 +65,7 @@ public class PR131Main {
      * 
      * @param filename Nom del fitxer XML a guardar.
      */
-    public void processarDocument(String filename) {
+    public void processarFitxerXML(String filename) {
         if (comprovarIDirCrearDirectori(dataDir)) {
             Document doc = construirDocument();
             File fitxerSortida = new File(dataDir, filename);

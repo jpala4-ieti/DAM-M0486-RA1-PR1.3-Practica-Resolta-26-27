@@ -70,7 +70,7 @@ class PR130MainTest {
 
     @Test
     void testImprimirCapçaleres() {
-        String expected = "Nom      Cognom        Edat  Ciutat\n-------- -------------- ----- ---------";
+        String expected = "Nom      Cognom         Edat  Ciutat\n-------- -------------- ----- ---------";
         assertEquals(expected, PersonaFormatter.getCapçaleres(), "Les capçaleres no són correctes.");
     }
 
@@ -84,6 +84,6 @@ class PR130MainTest {
     @Test
     void testProcessFile() {
         // Comprova que el programa llegeix correctament el fitxer i processa les persones
-        app.processarFitxer("persones.xml");
+        app.processarFitxerXML("persones.xml");
     }
 }

@@ -4,13 +4,12 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import com.project.pr13.format.PersonaFormatter;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.File;
 import java.io.InputStream;
-
-import com.project.pr13.format.PersonaFormatter;
-
 
 /**
  * Classe principal que gestiona la lectura i el processament de fitxers XML per obtenir dades de persones.
@@ -41,7 +40,7 @@ public class PR130Main {
         File dataDir = new File(userDir, "data" + File.separator + "pr13");
 
         PR130Main app = new PR130Main(dataDir);
-        app.processarFitxer("persones.xml");
+        app.processarFitxerXML("persones.xml");
     }
 
     /**
@@ -49,7 +48,7 @@ public class PR130Main {
      * 
      * @param filename Nom del fitxer XML a processar.
      */
-    public void processarFitxer(String filename) {
+    public void processarFitxerXML(String filename) {
         File inputFile = new File(dataDir, filename);
         Document doc = parseXML(inputFile);
         if (doc != null) {
