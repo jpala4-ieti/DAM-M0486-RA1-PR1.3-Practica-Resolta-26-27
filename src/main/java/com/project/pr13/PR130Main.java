@@ -91,16 +91,18 @@ public class PR130Main {
     }
 
     /**
-     * Imprimeix per consola les capçaleres de les columnes que es mostraran per a les dades de les persones.
+     * Imprimeix per consola les capçaleres de la taula de persones.
+     * Cal fer servir PersonaFormatter.getCapçaleres().
      */
     public static void imprimirCapçaleres() {
         System.out.println(PersonaFormatter.getCapçaleres());
     }
 
     /**
-     * Imprimeix per consola les dades de cada persona obtingudes d'un NodeList.
-     * 
-     * @param persones NodeList que conté els elements "persona" del document XML.
+     * Imprimeix per consola una línia per a cada persona del NodeList,
+     * amb el format de PersonaFormatter.formatarPersona().
+     *
+     * @param persones NodeList amb els elements "persona" del document XML.
      */
     public static void imprimirDadesPersones(NodeList persones) {
         for (int i = 0; i < persones.getLength(); i++) {

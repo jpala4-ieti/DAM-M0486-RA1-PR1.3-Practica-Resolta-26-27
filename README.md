@@ -4,7 +4,7 @@ Aquest projecte correspon a la pràctica PR1.3 relacionada amb treball amb docum
 
 ### Instruccions ###
 
-Aquest projecte conté la solució de la pràctica PR1.3: les classes `PR130Main`, `PR131Main` i `PR132Main` estan implementades i el codi passa tots els tests (`mvn test`).
+Aquest projecte conté la solució de la pràctica PR1.3: les classes `PR130Main`, `format/PersonaFormatter`, `PR131Main` i `PR132Main` estan implementades i el codi passa tots els tests (`mvn test`).
 
 ### Compilació i funcionament ###
 
