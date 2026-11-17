@@ -8,6 +8,9 @@ package com.project.pr13.format;
  */
 public class PersonaFormatter {
 
+    // "%-8s": text alineat a l'esquerra dins d'una columna de 8 caràcters (s'omple amb espais)
+    private static final String FORMAT = "%-8s %-14s %-5s %-9s";
+
     /**
      * Retorna les dues línies de la capçalera, separades per un salt de línia (\n):
      * els noms de les columnes i, a sota, una línia de guions per a cada columna.
@@ -15,7 +18,9 @@ public class PersonaFormatter {
      * @return Capçalera de la taula de persones.
      */
     public static String getCapçaleres() {
-        return "Nom      Cognom         Edat  Ciutat\n-------- -------------- ----- ---------";
+        // Els noms de les columnes s'alineen amb el mateix format que les dades
+        return String.format(FORMAT, "Nom", "Cognom", "Edat", "Ciutat").stripTrailing()
+                + "\n" + "-------- -------------- ----- ---------";
     }
 
     /**
@@ -28,6 +33,6 @@ public class PersonaFormatter {
      * @return Línia amb les dades formatades en columnes.
      */
     public static String formatarPersona(String nom, String cognom, String edat, String ciutat) {
-        return String.format("%-8s %-14s %-5s %-9s", nom, cognom, edat, ciutat);
+        return String.format(FORMAT, nom, cognom, edat, ciutat);
     }
 }

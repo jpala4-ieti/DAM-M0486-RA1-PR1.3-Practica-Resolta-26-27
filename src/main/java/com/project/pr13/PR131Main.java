@@ -5,6 +5,7 @@ import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
@@ -98,48 +99,43 @@ public class PR131Main {
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.newDocument();
 
-            // Crear l'element arrel 'biblioteca'
+            // Element arrel
             Element biblioteca = doc.createElement("biblioteca");
             doc.appendChild(biblioteca);
 
-            // Afegir l'element 'llibre' amb els seus detalls
+            // Llibre, amb l'identificador com a atribut
             Element llibre = doc.createElement("llibre");
             llibre.setAttribute("id", "001");
             biblioteca.appendChild(llibre);
 
-            Element titol = doc.createElement("titol");
-            titol.appendChild(doc.createTextNode("El viatge dels venturons"));
-            llibre.appendChild(titol);
-
-            Element autor = doc.createElement("autor");
-            autor.appendChild(doc.createTextNode("Joan Pla"));
-            llibre.appendChild(autor);
-
-            Element anyPublicacio = doc.createElement("anyPublicacio");
-            anyPublicacio.appendChild(doc.createTextNode("1998"));
-            llibre.appendChild(anyPublicacio);
-
-            Element editorial = doc.createElement("editorial");
-            editorial.appendChild(doc.createTextNode("Edicions Mar"));
-            llibre.appendChild(editorial);
-
-            Element genere = doc.createElement("genere");
-            genere.appendChild(doc.createTextNode("Aventura"));
-            llibre.appendChild(genere);
-
-            Element pagines = doc.createElement("pagines");
-            pagines.appendChild(doc.createTextNode("320"));
-            llibre.appendChild(pagines);
-
-            Element disponible = doc.createElement("disponible");
-            disponible.appendChild(doc.createTextNode("true"));
-            llibre.appendChild(disponible);
+            // Cada dada del llibre és un element fill amb un node de text
+            afegirElementAmbText(doc, llibre, "titol", "El viatge dels venturons");
+            afegirElementAmbText(doc, llibre, "autor", "Joan Pla");
+            afegirElementAmbText(doc, llibre, "anyPublicacio", "1998");
+            afegirElementAmbText(doc, llibre, "editorial", "Edicions Mar");
+            afegirElementAmbText(doc, llibre, "genere", "Aventura");
+            afegirElementAmbText(doc, llibre, "pagines", "320");
+            afegirElementAmbText(doc, llibre, "disponible", "true");
 
             return doc;
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (ParserConfigurationException e) {
+            System.out.println("No s'ha pogut crear el document XML: " + e.getMessage());
             return null;
         }
+    }
+
+    /**
+     * Crea un element amb un node de text i l'afegeix com a fill de l'element pare.
+     *
+     * @param doc Document al qual pertanyen els elements.
+     * @param pare Element que rebrà el fill nou.
+     * @param nom Nom de l'element nou.
+     * @param text Contingut de text de l'element nou.
+     */
+    private static void afegirElementAmbText(Document doc, Element pare, String nom, String text) {
+        Element element = doc.createElement(nom);
+        element.appendChild(doc.createTextNode(text));
+        pare.appendChild(element);
     }
 
     /**
@@ -150,16 +146,16 @@ public class PR131Main {
      */
     private static void guardarDocument(Document doc, File fitxerSortida) {
         try {
-            TransformerFactory transformerFactory = TransformerFactory.newInstance();
-            Transformer transformer = transformerFactory.newTransformer();
+            Transformer transformer = TransformerFactory.newInstance().newTransformer();
             transformer.setOutputProperty(OutputKeys.INDENT, "yes");
-            DOMSource source = new DOMSource(doc);
-            StreamResult result = new StreamResult(fitxerSortida);
-            transformer.transform(source, result);
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+            // El fitxer de l'annex no porta la declaració <?xml ...?> a la primera línia
+            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+
+            transformer.transform(new DOMSource(doc), new StreamResult(fitxerSortida));
             System.out.println("El fitxer XML s'ha guardat a: " + fitxerSortida.getPath());
         } catch (TransformerException e) {
-            System.out.println("No s'ha pogut guardar el fitxer XML.");
-            e.printStackTrace();
+            System.out.println("No s'ha pogut guardar el fitxer XML: " + e.getMessage());
         }
     }
 }

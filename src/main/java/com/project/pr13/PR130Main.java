@@ -3,13 +3,15 @@ package com.project.pr13;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.project.pr13.format.PersonaFormatter;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
-import java.io.InputStream;
+import java.io.IOException;
 
 /**
  * Classe principal que gestiona la lectura i el processament de fitxers XML per obtenir dades de persones.
@@ -65,27 +67,15 @@ public class PR130Main {
      * @return Document XML carregat o null si hi ha hagut un error en la lectura.
      */
     public static Document parseXML(File inputFile) {
-        try (InputStream inputStream = inputFile.toURI().toURL().openStream()) {
-            return parseXML(inputStream);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    /**
-     * Llegeix un InputStream que conté dades XML i el converteix en un objecte Document.
-     * 
-     * @param inputStream Flux d'entrada que conté les dades XML.
-     * @return Document XML carregat o null si hi ha hagut un error en la lectura.
-     */
-    public static Document parseXML(InputStream inputStream) {
         try {
             DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            return dBuilder.parse(inputStream);
-        } catch (Exception e) {
-            e.printStackTrace();
+            return dBuilder.parse(inputFile);
+        } catch (ParserConfigurationException | SAXException | IOException e) {
+            // IOException: el fitxer no existeix o no es pot llegir.
+            // SAXException: el contingut no és XML ben format
+            System.out.println("No s'ha pogut llegir el fitxer XML " + inputFile.getPath()
+                    + ": " + e.getMessage());
             return null;
         }
     }

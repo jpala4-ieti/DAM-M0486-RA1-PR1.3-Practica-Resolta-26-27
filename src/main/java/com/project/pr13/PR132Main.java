@@ -20,6 +20,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -138,23 +139,28 @@ public class PR132Main {
      * @return Llista amb la informació dels cursos (ID, tutor, nombre d'alumnes).
      */
     public List<List<String>> llistarCursos() {
-        List<List<String>> dades = new ArrayList<>();
+        List<List<String>> cursos = new ArrayList<>();
         try {
             Document document = carregarDocumentXML(xmlFilePath);
             XPath xpath = XPathFactory.newInstance().newXPath();
-            NodeList cursNodes = (NodeList) xpath.evaluate("/cursos/curs", document, XPathConstants.NODESET);
+            NodeList nodesCurs = (NodeList) xpath.evaluate(
+                    "/cursos/curs", document, XPathConstants.NODESET);
 
-            for (int i = 0; i < cursNodes.getLength(); i++) {
-                String id = xpath.evaluate("@id", cursNodes.item(i));
-                String tutor = xpath.evaluate("tutor", cursNodes.item(i));
-                NodeList alumnes = (NodeList) xpath.evaluate("alumnes/alumne", cursNodes.item(i), XPathConstants.NODESET);
-                dades.add(List.of(id, tutor, String.valueOf(alumnes.getLength())));
+            for (int i = 0; i < nodesCurs.getLength(); i++) {
+                // Expressions relatives: s'avaluen a partir del node de cada curs
+                Node curs = nodesCurs.item(i);
+                String id = xpath.evaluate("@id", curs);
+                String tutor = xpath.evaluate("tutor", curs);
+                // count() retorna el nombre de nodes sense haver-los de recórrer
+                Double totalAlumnes = (Double) xpath.evaluate(
+                        "count(alumnes/alumne)", curs, XPathConstants.NUMBER);
+                cursos.add(List.of(id, tutor, String.valueOf(totalAlumnes.intValue())));
             }
-        } catch (XPathExpressionException e) {
-            System.out.println("Error en processar l'expressió XPath.");
-            e.printStackTrace();
+        } catch (XPathExpressionException | RuntimeException e) {
+            // carregarDocumentXML llança RuntimeException si el fitxer no es pot llegir
+            System.out.println("Error en llistar els cursos: " + e.getMessage());
         }
-        return dades;
+        return cursos;
     }
 
     /**
@@ -174,24 +180,21 @@ public class PR132Main {
      * @return Llista amb la informació dels mòduls (ID, títol).
      */
     public List<List<String>> mostrarModuls(String idCurs) {
-        List<List<String>> dades = new ArrayList<>();
+        List<List<String>> moduls = new ArrayList<>();
         try {
             Document document = carregarDocumentXML(xmlFilePath);
-            XPath xpath = XPathFactory.newInstance().newXPath();
+            XPath xpath = crearXPath(Map.of("idCurs", idCurs));
+            NodeList nodesModul = (NodeList) xpath.evaluate(
+                    "/cursos/curs[@id=$idCurs]/moduls/modul", document, XPathConstants.NODESET);
 
-            String expressioModuls = String.format("/cursos/curs[@id='%s']/moduls/modul", idCurs);
-            NodeList modulsNodes = (NodeList) xpath.evaluate(expressioModuls, document, XPathConstants.NODESET);
-
-            for (int i = 0; i < modulsNodes.getLength(); i++) {
-                String idModul = xpath.evaluate("@id", modulsNodes.item(i));
-                String titol = xpath.evaluate("titol", modulsNodes.item(i));
-                dades.add(List.of(idModul, titol));
+            for (int i = 0; i < nodesModul.getLength(); i++) {
+                Node modul = nodesModul.item(i);
+                moduls.add(List.of(xpath.evaluate("@id", modul), xpath.evaluate("titol", modul)));
             }
-        } catch (XPathExpressionException e) {
-            System.out.println("Error en processar l'expressió XPath.");
-            e.printStackTrace();
+        } catch (XPathExpressionException | RuntimeException e) {
+            System.out.println("Error en mostrar els mòduls: " + e.getMessage());
         }
-        return dades;
+        return moduls;
     }
 
     /**
@@ -214,17 +217,15 @@ public class PR132Main {
         List<String> alumnes = new ArrayList<>();
         try {
             Document document = carregarDocumentXML(xmlFilePath);
-            XPath xpath = XPathFactory.newInstance().newXPath();
+            XPath xpath = crearXPath(Map.of("idCurs", idCurs));
+            NodeList nodesAlumne = (NodeList) xpath.evaluate(
+                    "/cursos/curs[@id=$idCurs]/alumnes/alumne", document, XPathConstants.NODESET);
 
-            String expressioAlumnes = String.format("/cursos/curs[@id='%s']/alumnes/alumne", idCurs);
-            NodeList alumnesNodes = (NodeList) xpath.evaluate(expressioAlumnes, document, XPathConstants.NODESET);
-
-            for (int i = 0; i < alumnesNodes.getLength(); i++) {
-                alumnes.add(alumnesNodes.item(i).getTextContent());
+            for (int i = 0; i < nodesAlumne.getLength(); i++) {
+                alumnes.add(nodesAlumne.item(i).getTextContent());
             }
-        } catch (XPathExpressionException e) {
-            System.out.println("Error en processar l'expressió XPath.");
-            e.printStackTrace();
+        } catch (XPathExpressionException | RuntimeException e) {
+            System.out.println("Error en llistar els alumnes: " + e.getMessage());
         }
         return alumnes;
     }
@@ -246,32 +247,38 @@ public class PR132Main {
      * @param nomAlumne Nom de l'alumne a afegir.
      */
     public void afegirAlumne(String idCurs, String nomAlumne) {
+        if (nomAlumne == null || nomAlumne.isBlank()) {
+            System.out.println("El nom de l'alumne no pot estar buit.");
+            return;
+        }
         try {
             Document document = carregarDocumentXML(xmlFilePath);
-            XPath xpath = XPathFactory.newInstance().newXPath();
+            XPath xpath = crearXPath(Map.of("idCurs", idCurs));
 
-            String expressioCurs = String.format("/cursos/curs[@id='%s']", idCurs);
-            NodeList cursNode = (NodeList) xpath.evaluate(expressioCurs, document, XPathConstants.NODESET);
-            if (cursNode.getLength() == 0) {
+            Node curs = (Node) xpath.evaluate(
+                    "/cursos/curs[@id=$idCurs]", document, XPathConstants.NODE);
+            if (curs == null) {
                 System.out.println("No s'ha trobat cap curs amb l'ID proporcionat.");
                 return;
             }
 
-            NodeList alumnesNode = (NodeList) xpath.evaluate(expressioCurs + "/alumnes", document, XPathConstants.NODESET);
-            if (alumnesNode.getLength() > 0) {
-                Element nouAlumne = document.createElement("alumne");
-                nouAlumne.setTextContent(nomAlumne);
-                alumnesNode.item(0).appendChild(nouAlumne);
-
-                guardarDocumentXML(document);
-                System.out.println("Alumne afegit correctament al curs.");
+            Node alumnes = (Node) xpath.evaluate("alumnes", curs, XPathConstants.NODE);
+            if (alumnes == null) {
+                // El curs encara no té llista d'alumnes: es crea davant dels mòduls
+                // (si tampoc no hi ha mòduls, insertBefore amb null l'afegeix al final)
+                alumnes = document.createElement("alumnes");
+                curs.insertBefore(alumnes, (Node) xpath.evaluate(
+                        "moduls", curs, XPathConstants.NODE));
             }
-        } catch (XPathExpressionException e) {
-            System.out.println("Error en processar l'expressió XPath.");
-            e.printStackTrace();
-        } catch (Exception e) {
-            System.out.println("Error en afegir l'alumne.");
-            e.printStackTrace();
+
+            Element nouAlumne = document.createElement("alumne");
+            nouAlumne.setTextContent(nomAlumne);
+            alumnes.appendChild(nouAlumne);
+
+            guardarDocumentXML(document);
+            System.out.println("Alumne afegit correctament al curs.");
+        } catch (XPathExpressionException | RuntimeException e) {
+            System.out.println("Error en afegir l'alumne: " + e.getMessage());
         }
     }
 
@@ -284,28 +291,40 @@ public class PR132Main {
     public void eliminarAlumne(String idCurs, String nomAlumne) {
         try {
             Document document = carregarDocumentXML(xmlFilePath);
-            XPath xpath = XPathFactory.newInstance().newXPath();
+            XPath xpath = crearXPath(Map.of("idCurs", idCurs, "nomAlumne", nomAlumne));
 
-            String expressioAlumne = String.format("/cursos/curs[@id='%s']/alumnes/alumne[text()='%s']", idCurs, nomAlumne);
-            NodeList alumnesNode = (NodeList) xpath.evaluate(expressioAlumne, document, XPathConstants.NODESET);
-
-            if (alumnesNode.getLength() == 0) {
+            Node alumne = (Node) xpath.evaluate(
+                    "/cursos/curs[@id=$idCurs]/alumnes/alumne[text()=$nomAlumne]",
+                    document, XPathConstants.NODE);
+            if (alumne == null) {
                 System.out.println("L'alumne no està inscrit en el curs o no existeix.");
                 return;
             }
 
-            Node alumneNode = alumnesNode.item(0);
-            alumneNode.getParentNode().removeChild(alumneNode);
+            // Un node només el pot eliminar el seu pare
+            alumne.getParentNode().removeChild(alumne);
 
             guardarDocumentXML(document);
             System.out.println("Alumne eliminat correctament del curs.");
-        } catch (XPathExpressionException e) {
-            System.out.println("Error en processar l'expressió XPath.");
-            e.printStackTrace();
-        } catch (Exception e) {
-            System.out.println("Error en eliminar l'alumne.");
-            e.printStackTrace();
+        } catch (XPathExpressionException | RuntimeException e) {
+            System.out.println("Error en eliminar l'alumne: " + e.getMessage());
         }
+    }
+
+    /**
+     * Crea un XPath que resol les variables ($nom) de les expressions amb els valors del mapa.
+     *
+     * Els valors que escriu l'usuari es passen com a variables i no enganxats dins de
+     * l'expressió: així un apòstrof (per exemple "D'ANGELO, Marc") no trenca l'expressió
+     * ni permet modificar-la.
+     *
+     * @param variables Nom i valor de cada variable que fan servir les expressions.
+     * @return XPath configurat amb les variables.
+     */
+    private static XPath crearXPath(Map<String, String> variables) {
+        XPath xpath = XPathFactory.newInstance().newXPath();
+        xpath.setXPathVariableResolver(nom -> variables.get(nom.getLocalPart()));
+        return xpath;
     }
 
     /**
